@@ -1,18 +1,18 @@
 from django.shortcuts import render,redirect
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.contrib.auth.models import User
 from .models import *
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login,logout
 from django.utils import timezone
 from django.core.mail import send_mail
+# from django.contrib.sessions.exceptions import SessionInterrupted
 import json
 
 
 
 def Home(request):
-    # if request.user.is_authenticated:
-    #     return redirect('/')
+
 
     context={
         'is_logged_in': request.user.is_authenticated,
@@ -114,7 +114,7 @@ def check_auth(request):
 @csrf_exempt
 def LogoutPage(request):
     if request.method=='POST':
-        logout(request)
+        logout(request)  
         return JsonResponse({
             "success": True
             })
@@ -146,9 +146,9 @@ def ContactPage(request):
             recipient_list=["m2104mohan@gmail.com"],  
             fail_silently=False,
         )
-        return JsonResponse({''
-        'success':True,
-        "message": "Message sent successfully!"
+        return JsonResponse({
+            'success':True,
+            "message": "Message sent successfully!"
         })
 
     return JsonResponse({
@@ -175,11 +175,6 @@ def save_opinion(request):  #4809-4827  4755-4774
         rating = request.POST.get("rating")
         message = request.POST.get("opinion_message")
 
-        # BASIC VALIDATION
-        # if not rating or not message:
-        #     return JsonResponse({"error": "Missing fields"}, status=400)
-
-        # project = Project.objects.get(id=project_id)
         try:
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
@@ -196,7 +191,16 @@ def save_opinion(request):  #4809-4827  4755-4774
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
+def get_user_data(request):
 
+    if request.user.is_authenticated:
+        return JsonResponse({
+            "authenticated": True,
+            "username": request.user.username,
+            "is_superuser": request.user.is_superuser
+        })
+
+    return JsonResponse({"authenticated": False})
 
 
 

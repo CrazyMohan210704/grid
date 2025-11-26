@@ -102,17 +102,82 @@ document.addEventListener('DOMContentLoaded', () => {
     initToolsSection();
     initSmoothScroll();
     initAuthModal();
+    checkUser();
+
+    
             
-            // Show auth modal after 5 seconds if not logged in
-            if (!currentUser) {
-                setTimeout(() => {
-                    authModal.classList.add('active');
-                }, 5000);
-            }
-        
+
     
     console.log('Portfolio initialized successfully');
 });
+
+// refresh user status every refresh
+let userCheckInProgress = false;
+let userRequestController = null;
+let isLoggingOut = false;
+
+async function fetchUserData() {
+    // --- KEY CHANGE: If a logout is in progress, don't fetch user data. ---
+    if (isLoggingOut) {
+        console.log('Logout in progress. Skipping user data fetch.');
+        return { authenticated: false };
+    }
+
+    if (userRequestController) {
+        userRequestController.abort();   // Cancel any previous pending request
+    }
+
+    userRequestController = new AbortController();
+
+    try {
+        const res = await fetch("/user/", {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+            signal: userRequestController.signal
+        });
+
+        // Handle 401 Unauthorized specifically (from our middleware)
+        if (res.status === 401) {
+            console.log('Session expired or invalid (401)');
+            return { authenticated: false, needsReauth: true };
+        }
+        
+        if (!res.ok) {
+            console.log(`Request failed with status: ${res.status}`);
+            return { authenticated: false };
+        }
+        
+        return await res.json();
+
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            console.log('Request was aborted');
+        } else {
+            console.error('Error fetching user data:', err);
+        }
+        return { authenticated: false };
+    }
+}
+
+async function checkUser() {
+    if (userCheckInProgress) return;
+    userCheckInProgress = true;
+
+    const data = await fetchUserData();
+
+    if (!data.authenticated) {
+        setTimeout(() => authModal.classList.add("active"), 5000);
+    }
+
+    userCheckInProgress = false;
+}
+
+
+window.addEventListener("load", () => {
+    checkUser();
+});
+
 
 // ==================== NAVIGATION ====================
 function initNavigation() {
@@ -168,23 +233,6 @@ function initNavigation() {
         });
     }
 
-    // Logout button
-    const logoutBtn = document.getElementById('logout');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Add this line for debugging
-            console.log('Logout button clicked!'); 
-            
-            logout(); // This calls your main logout function
-        });
-    } else {
-        // Add this to see if the button is being found
-        console.error('Logout button with ID "logout" was NOT found!');
-    }
-
     // My Opinions button
     const myOpinionsBtn = document.getElementById('myOpinions');
     if (myOpinionsBtn) {
@@ -230,7 +278,7 @@ document.getElementById("signupForm").addEventListener("submit", async function 
 
             const formData = new FormData(this);
 
-            const response = await fetch("{% url 'signup' %}", {
+            const response = await fetch(SIGNUP_URL, {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": formData.get("csrfmiddlewaretoken")
@@ -256,56 +304,105 @@ document.getElementById("signupForm").addEventListener("submit", async function 
 
 // AJAX login page start 
 
-document.getElementById("loginForm").addEventListener("submit", async function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-
-            const res = await fetch("{% url 'login' %}", {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": formData.get("csrfmiddlewaretoken")
-                },
-                body: formData,
-            });
-
-            const data = await res.json();
-            console.log(data);
-
-            if (data.success) {
-                
-            } else {
-                alert(data.error);
-            }
-        });
-
 // AJAX login page end
 
 
 
+// check login status start
+
+async function updateUserUI() {
+    const res = await fetch("/user/");
+    const data = await res.json();
+    console.log(data);
+
+    const userMenu = document.getElementById("userName");
+    const loginBtn = document.getElementById("loginBtn");
+    const opinionsLink = document.getElementById("myOpinionsContainer");
+
+    if (data.authenticated) {
+        // Show welcome text
+        userMenu.textContent = data.username;
+
+        // Hide "Login"
+        if (loginBtn) loginBtn.style.display = "none";
+
+        // Show "My Opinions" only for superuser
+        if (data.is_superuser) {
+            opinionsLink.style.display = "block";
+        } else {
+            opinionsLink.style.display = "none";
+        }
+    } else {
+        // Show "Login"
+        if (loginBtn) loginBtn.style.display = "block";
+
+        // Hide superuser link
+        if (opinionsLink) opinionsLink.style.display = "none";
+    }
+}
+
+updateUserUI();
+
+
 // AJAX logout page start
 
-document.getElementById("logout").addEventListener("click", async function (e) {
-            e.preventDefault();
 
-            const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+// Find the logout button and add the listener
+const logoutBtn = document.getElementById('logout');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 1. Set the lock to prevent any new user checks
+        isLoggingOut = true;
+        console.log('Logout process started. Locking user status checks.');
 
-            const res = await fetch("/logout/", {
+        // 2. Abort any existing user check that might be in flight
+        if (userRequestController) {
+            userRequestController.abort();
+        }
+
+        try {
+            const res = await fetch('/logout/', {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": csrf
-                }
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({})
             });
 
             const data = await res.json();
             console.log(data);
 
             if (data.success) {
-                // alert("Logged out");
+                // Optional: Show a success message before reloading
+                showToast('Logged out successfully!');
+                logout();
+                // Give a moment for the toast to be seen
+                setTimeout(() => {
+                    window.location.reload(); // Reloading is a simple way to reset state
+                }, 1000);
+
             } else {
-                alert(data.error);
+                // If logout fails, we must unlock so the app works again
+                alert(data.error || 'Logout failed. Please try again.');
             }
-        });
+        } catch (error) {
+            console.error('Logout request failed:', error);
+            alert('An error occurred during logout.');
+        } finally {
+            // 3. IMPORTANT: Always clear the lock, even on failure
+            // If the page reloads, this doesn't matter, but it's good practice.
+            isLoggingOut = false;
+            console.log('Logout process finished. Unlocking user status checks.');
+        }
+    });
+}
+
+
 
 
 // AJAX logout page end
@@ -319,7 +416,7 @@ document.getElementById("contactForm").addEventListener("submit", async function
 
             const formData = new FormData(this);
 
-            const response = await fetch("{% url 'send_contact' %}", {
+            const response = await fetch(SEND_CONTACT_URL, {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": formData.get("csrfmiddlewaretoken")
@@ -739,24 +836,58 @@ function initUserSession() {
     }
 }
 
-function updateUserUI() {
-    if (currentUser) {
+async function updateUserUI() {
+
+    const res = await fetch("/user/");
+    const data = await res.json()
+
+    const userMenu = document.getElementById("userName");
+    const loginBtn = document.getElementById("loginBtn");
+    const opinionsLink = document.getElementById("myOpinions");
+
+    if (data.authenticated) {
+        // Show welcome text
+        userMenu.textContent = data.username;
+
+        // Hide "Login"
+        if (loginBtn) loginBtn.style.display = "none";
         if (navAuth) navAuth.style.display = 'none';
         if (navUser) navUser.style.display = 'block';
-        if (userName) userName.textContent = currentUser;
+        if (userName) userName.textContent = data.username;
+
+        // Show "My Opinions" only for superuser
+        if (data.is_superuser) {
+            opinionsLink.style.display = "block";
+        } else {
+            opinionsLink.style.display = "none";
+        }
     } else {
+        // Show "Login"
+        if (loginBtn) loginBtn.style.display = "block";
+
+        // Hide superuser link
+        if (opinionsLink) opinionsLink.style.display = "none";
         if (navAuth) navAuth.style.display = 'block';
         if (navUser) navUser.style.display = 'none';
     }
 }
 
+
+
+
 function logout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
     updateUserUI();
+    // Show "Login"
     if (userDropdown) userDropdown.classList.remove('active');
     if (hamburger) hamburger.classList.remove('active');
     if (navLinks) navLinks.classList.remove('active');
+     if (loginBtn) loginBtn.style.display = "block";
+
+        // Hide superuser link
+        if (navAuth) navAuth.style.display = 'block';
+        if (navUser) navUser.style.display = 'none';
     showToast('Logged out successfully');
 }
 
@@ -789,9 +920,14 @@ function initModals() {
     if (closeOpinionModal && opinionModal) {
         closeOpinionModal.addEventListener('click', () => closeModal(opinionModal));
         opinionModal.addEventListener('click', (e) => {
-            if (e.target === opinionModal) closeModal(opinionModal);
+            if (e.target === opinionModal){ 
+                closeModal(opinionModal);
+                
+            }
+            
         });
-    }
+    } 
+
 
     // ESC key to close modals
     document.addEventListener('keydown', (e) => {
@@ -799,6 +935,7 @@ function initModals() {
             closeModal(contactModal);
             closeModal(opinionModal);
             closeLightbox();
+            
         }
     });
 }
@@ -814,6 +951,7 @@ function closeModal(modal) {
     if (modal) {
         modal.classList.remove('active');
         document.body.style.overflow = '';
+        resetOpinionForm(); 
     }
 }
 
@@ -851,7 +989,7 @@ function initForms() {
     const message = formData.get("opinion_message");
     const csrf = formData.get("csrfmiddlewaretoken");
 
-    const response = await fetch("/save_opinion/", {
+    const response = await fetch(SAVE_OPINION_URL, {
         method: "POST",
         headers: {
             "X-CSRFToken": csrf,
@@ -954,12 +1092,13 @@ function handleOpinionSubmit() {
     const card = document.querySelector(`[data-project-id="${currentProjectId}"]`);
     if (card) {
         const locked = card.querySelector('.project-locked');
-        const expanded = card.querySelector('.project-expanded');
+        const collapsed = card.querySelector('.project-collapsed');
         
         if (locked) locked.style.display = 'none';
-        if (expanded) expanded.classList.add('active');
+        if (collapsed) collapsed.classList.add('active');
         
-        projectStates[currentProjectId] = 'expanded';
+        
+        projectStates[currentProjectId] = 'collapsed';
         localStorage.setItem('projectStates', JSON.stringify(projectStates));
     }
 
@@ -1021,23 +1160,7 @@ function initPortfolioFeatures() {
         });
     });
 
-    // Expand/Collapse buttons
-    document.querySelectorAll('.expand-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const card = btn.closest('.project-card');
-            const id = card?.dataset.projectId;
-            const expanded = card?.querySelector('.project-expanded');
-            const collapsed = card?.querySelector('.project-collapsed');
-
-            if (collapsed) collapsed.classList.remove('active');
-            if (expanded) expanded.classList.add('active');
-
-            if (id) {
-                projectStates[id] = 'expanded';
-                localStorage.setItem('projectStates', JSON.stringify(projectStates));
-            }
-        });
-    });
+    // Collapse buttons
 
     document.querySelectorAll('.collapse-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1055,7 +1178,128 @@ function initPortfolioFeatures() {
             }
         });
     });
-}
+
+    // function initPortfolioFeatures() {
+            document.querySelectorAll('.expand-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const card = btn.closest('.project-card');
+                    const id = card?.dataset.projectId;
+
+                    // Simple check for demo purposes
+                    if (unlockedProjects.includes(id)) {
+                        openProjectModal(card);
+                    } else {
+                        alert('Project is locked!');
+                    }
+                });
+            });
+
+            const projectModal = document.getElementById('projectModal');
+            const closeProjectModalBtn = document.getElementById('closeProjectModal');
+
+            if (closeProjectModalBtn) {
+                closeProjectModalBtn.addEventListener('click', closeProjectModal);
+            }
+
+            if (projectModal) {
+                projectModal.addEventListener('click', (e) => {
+                    if (e.target === projectModal) closeProjectModal();
+                });
+            }
+        }
+
+        function openProjectModal(card) {
+            const modal = document.getElementById('projectModal');
+            if (!modal) return;
+
+            const title = card.querySelector('h3')?.textContent || 'Project';
+            const category = card.dataset.category || 'Design';
+            const mainImgSrc = card.querySelector('.project-image img')?.src;
+            const shortDesc = card.querySelector('.project-collapsed p')?.textContent || '';
+
+            const expandedContent = card.querySelector('.project-expanded');
+            const finalQuote = card.dataset.finalQuote || '';
+            let fullDescHTML = '';
+            let tagsHTML = '';
+            const galleryImages = [];
+
+            if (mainImgSrc) galleryImages.push(mainImgSrc);
+
+            if (expandedContent) {
+                const clone = expandedContent.cloneNode(true);
+                const ul = clone.querySelector('ul');
+                if (ul) {
+                    ul.querySelectorAll('li').forEach(li => {
+                        tagsHTML += `<span class="pm-tag">${li.textContent}</span>`;
+                    });
+                    ul.remove();
+                }
+
+                // Extract gallery images from hidden content
+                clone.querySelectorAll('.project-gallery img').forEach(img => {
+                    galleryImages.push(img.src);
+                });
+                const galleryDiv = clone.querySelector('.project-gallery');
+                if (galleryDiv) galleryDiv.remove();
+
+                const h3 = clone.querySelector('h3');
+                if (h3) h3.remove();
+
+                fullDescHTML = clone.innerHTML;
+            }
+
+            document.getElementById('pmTitle').textContent = title;
+            document.getElementById('pmCategory').textContent = category;
+            document.getElementById('pmShortDesc').textContent = shortDesc;
+            document.getElementById('pmFullDesc').innerHTML = fullDescHTML;
+            document.getElementById('pmTags').innerHTML = tagsHTML;
+            document.getElementById('pmFinalQuote').innerText = finalQuote;
+
+            const mainImgEl = document.getElementById('pmMainImage');
+            if (mainImgEl) mainImgEl.src = mainImgSrc;
+            
+            const galleryEl = document.getElementById('pmGallery');
+            if (galleryEl) {
+                galleryEl.innerHTML = galleryImages.map((src, index) =>
+                    `<img src="${src}" alt="Gallery ${index}" onclick="openLightboxFromModal(${index})">`
+                ).join('');
+            }
+
+            window.currentModalImages = galleryImages;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProjectModal() {
+            const modal = document.getElementById('projectModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function openLightboxFromModal(index) {
+            const images = window.currentModalImages || [];
+            if (images.length === 0) return;
+
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+
+            if (lightbox && lightboxImg) {
+                lightbox.classList.add('active');
+                lightboxImg.src = images[index];
+                document.body.style.overflow = 'hidden';
+
+                window.lightboxState = {
+                    images: images,
+                    index: index,
+                    zoom: 1
+                };
+                updateLightboxNav();
+            }
+        }
+    // }
 
 
 function restoreProjectStates() {
@@ -1069,7 +1313,7 @@ function restoreProjectStates() {
 
         if (locked) locked.style.display = 'none';
 
-        const state = projectStates[id] || 'expanded';
+        const state = projectStates[id] || 'collapsed';
         if (state === 'collapsed') {
             if (expanded) expanded.classList.remove('active');
             if (collapsed) collapsed.classList.add('active');
@@ -1254,39 +1498,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ==================== LIGHTBOX ====================
 function initLightbox() {
-    let zoomScale = 1;
-    let currentImageIndex = 0;
-    let currentProjectImages = [];
+            window.lightboxState = window.lightboxState || { images: [], index: 0, zoom: 1 };
 
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
-    const lightboxClose = document.getElementById('lightboxClose');
-    const lightboxPrev = document.getElementById('lightboxPrev');
-    const lightboxNext = document.getElementById('lightboxNext');
-    const zoomInBtn = document.getElementById('zoomIn');
-    const zoomOutBtn = document.getElementById('zoomOut');
-    const zoomResetBtn = document.getElementById('zoomReset');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            const lightboxClose = document.getElementById('lightboxClose');
+            const lightboxPrev = document.getElementById('lightboxPrev');
+            const lightboxNext = document.getElementById('lightboxNext');
+            const zoomInBtn = document.getElementById('zoomIn');
+            const zoomOutBtn = document.getElementById('zoomOut');
+            const zoomResetBtn = document.getElementById('zoomReset');
 
-    if (!lightbox || !lightboxImg) return;
+            if (!lightbox || !lightboxImg) return;
 
-    // Attach click handlers to all images in project cards
-    document.querySelectorAll('.project-card').forEach(card => {
+            window.updateLightboxNav = updateNavButtons;
+
+                document.querySelectorAll('.project-card').forEach(card => {
         const projectImages = card.querySelectorAll('.project-image img, .project-gallery img');
         projectImages.forEach((img, index) => {
             img.style.cursor = 'pointer';
@@ -1308,105 +1537,108 @@ function initLightbox() {
         updateNavButtons();
     }
 
-    function closeLightbox() {
-        if (!lightbox) return;
-        lightbox.classList.remove('active');
-        document.body.style.overflow = '';
-    }
 
-    function updateImage() {
-        if (!lightboxImg) return;
-        lightboxImg.src = currentProjectImages[currentImageIndex];
-        zoomScale = 1;
-        lightboxImg.style.transform = 'scale(1)';
-        updateNavButtons();
-    }
 
-    function updateNavButtons() {
-        if (lightboxPrev) {
-            lightboxPrev.style.opacity = currentProjectImages.length > 1 ? '1' : '0.3';
-            lightboxPrev.style.pointerEvents = currentProjectImages.length > 1 ? 'auto' : 'none';
+            function closeLightbox() {
+                lightbox.classList.remove('active');
+                // If modal is active, keep body overflow hidden
+                if (!document.getElementById('projectModal')?.classList.contains('active')) {
+                    document.body.style.overflow = '';
+                }
+            }
+
+            function updateImage() {
+                lightboxImg.src = window.lightboxState.images[window.lightboxState.index];
+                window.lightboxState.zoom = 1;
+                lightboxImg.style.transform = 'scale(1)';
+                updateNavButtons();
+            }
+
+            function updateNavButtons() {
+                if (lightboxPrev) {
+                    lightboxPrev.style.opacity = window.lightboxState.images.length > 1 ? '1' : '0.3';
+                    lightboxPrev.style.pointerEvents = window.lightboxState.images.length > 1 ? 'auto' : 'none';
+                }
+                if (lightboxNext) {
+                    lightboxNext.style.opacity = window.lightboxState.images.length > 1 ? '1' : '0.3';
+                    lightboxNext.style.pointerEvents = window.lightboxState.images.length > 1 ? 'auto' : 'none';
+                }
+            }
+
+            if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+
+            if (lightboxPrev) {
+                lightboxPrev.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (window.lightboxState.images.length > 1) {
+                        window.lightboxState.index = (window.lightboxState.index - 1 + window.lightboxState.images.length) % window.lightboxState.images.length;
+                        updateImage();
+                    }
+                });
+            }
+
+            if (lightboxNext) {
+                lightboxNext.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (window.lightboxState.images.length > 1) {
+                        window.lightboxState.index = (window.lightboxState.index + 1) % window.lightboxState.images.length;
+                        updateImage();
+                    }
+                });
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                    window.lightboxState.zoom += 0.25;
+                    lightboxImg.style.transform = `scale(${window.lightboxState.zoom})`;
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                    if (window.lightboxState.zoom > 0.5) {
+                        window.lightboxState.zoom -= 0.25;
+                        lightboxImg.style.transform = `scale(${window.lightboxState.zoom})`;
+                    }
+                });
+            }
+
+            if (zoomResetBtn) {
+                zoomResetBtn.addEventListener('click', () => {
+                    window.lightboxState.zoom = 1;
+                    lightboxImg.style.transform = 'scale(1)';
+                });
+            }
+
+            if (lightbox) {
+                lightbox.addEventListener('click', (e) => {
+                    if (e.target === lightbox) closeLightbox();
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (!lightbox || !lightbox.classList.contains('active')) return;
+                
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowRight' && currentProjectImages.length > 1) {
+                    currentImageIndex = (currentImageIndex + 1) % currentProjectImages.length;
+                    updateImage();
+                }
+                if (e.key === 'ArrowLeft' && currentProjectImages.length > 1) {
+                    currentImageIndex = (currentImageIndex - 1 + currentProjectImages.length) % currentProjectImages.length;
+                    updateImage();
+                }
+                if (e.key === '+' || e.key === '=') {
+                    zoomScale = Math.min(zoomScale + 0.25, 3);
+                    if (lightboxImg) lightboxImg.style.transform = `scale(${zoomScale})`;
+                }
+                if (e.key === '-' || e.key === '_') {
+                    zoomScale = Math.max(zoomScale - 0.25, 0.5);
+                    if (lightboxImg) lightboxImg.style.transform = `scale(${zoomScale})`;
+                }
+            });
+
         }
-        if (lightboxNext) {
-            lightboxNext.style.opacity = currentProjectImages.length > 1 ? '1' : '0.3';
-            lightboxNext.style.pointerEvents = currentProjectImages.length > 1 ? 'auto' : 'none';
-        }
-    }
-
-    // Close button
-    if (lightboxClose) {
-        lightboxClose.addEventListener('click', closeLightbox);
-    }
-
-    // Navigation buttons
-    if (lightboxPrev) {
-        lightboxPrev.addEventListener('click', () => {
-            if (currentProjectImages.length <= 1) return;
-            currentImageIndex = (currentImageIndex - 1 + currentProjectImages.length) % currentProjectImages.length;
-            updateImage();
-        });
-    }
-
-    if (lightboxNext) {
-        lightboxNext.addEventListener('click', () => {
-            if (currentProjectImages.length <= 1) return;
-            currentImageIndex = (currentImageIndex + 1) % currentProjectImages.length;
-            updateImage();
-        });
-    }
-
-    // Zoom controls
-    if (zoomInBtn) {
-        zoomInBtn.addEventListener('click', () => {
-            zoomScale = Math.min(zoomScale + 0.25, 3);
-            if (lightboxImg) lightboxImg.style.transform = `scale(${zoomScale})`;
-        });
-    }
-
-    if (zoomOutBtn) {
-        zoomOutBtn.addEventListener('click', () => {
-            zoomScale = Math.max(zoomScale - 0.25, 0.5);
-            if (lightboxImg) lightboxImg.style.transform = `scale(${zoomScale})`;
-        });
-    }
-
-    if (zoomResetBtn) {
-        zoomResetBtn.addEventListener('click', () => {
-            zoomScale = 1;
-            if (lightboxImg) lightboxImg.style.transform = 'scale(1)';
-        });
-    }
-
-    // Click outside to close
-    if (lightbox) {
-        lightbox.addEventListener('click', (e) => {
-            if (e.target === lightbox) closeLightbox();
-        });
-    }
-
-    // Keyboard controls
-    document.addEventListener('keydown', (e) => {
-        if (!lightbox || !lightbox.classList.contains('active')) return;
-        
-        if (e.key === 'Escape') closeLightbox();
-        if (e.key === 'ArrowRight' && currentProjectImages.length > 1) {
-            currentImageIndex = (currentImageIndex + 1) % currentProjectImages.length;
-            updateImage();
-        }
-        if (e.key === 'ArrowLeft' && currentProjectImages.length > 1) {
-            currentImageIndex = (currentImageIndex - 1 + currentProjectImages.length) % currentProjectImages.length;
-            updateImage();
-        }
-        if (e.key === '+' || e.key === '=') {
-            zoomScale = Math.min(zoomScale + 0.25, 3);
-            if (lightboxImg) lightboxImg.style.transform = `scale(${zoomScale})`;
-        }
-        if (e.key === '-' || e.key === '_') {
-            zoomScale = Math.max(zoomScale - 0.25, 0.5);
-            if (lightboxImg) lightboxImg.style.transform = `scale(${zoomScale})`;
-        }
-    });
-}
 
 
 
@@ -1470,7 +1702,7 @@ function showToast(message) {
     const toastEl = document.createElement('div');
     toastEl.className = 'toast active';
     toastEl.textContent = message;
-    toastEl.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--primary-green);color:#fff;padding:1rem 2rem;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,0.2);z-index:3000;animation:fadeIn 0.3s';
+    toastEl.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--gradient-primary);color:#fff;padding:1rem 2rem;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,0.2);z-index:3000;animation:fadeIn 0.3s';
     
     document.body.appendChild(toastEl);
     

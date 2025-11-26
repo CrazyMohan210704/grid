@@ -69,20 +69,20 @@
                     <div class="user-menu">
                         <a href="#" id="userProfile">
                             <div class="nav-item">
+                                
                                 <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
                                 <div class="nav-name">Welcome, <span id="userName">User</span></div>
                             </div>
                         </a>
                         <div class="user-dropdown" id="userDropdown">
                             
-                            {% if request.user.is_authenticated and request.user.is_superuser %}
-                            <a href="#" id="myOpinions">
+                            <a href="#" id="myOpinions" style="display: none;">
                                 <div class="nav-item">
                                     <div class="nav-icon"><i class="fas fa-comment"></i></div>
                                     <div class="nav-name">My Opinions</div>
                                 </div>
                             </a>
-                            {% endif %}
+                       
                             <a href="#" id="logout">
                                 <div class="nav-item">
                                     <div class="nav-icon"><i class="fas fa-sign-out"></i></div>
@@ -143,7 +143,7 @@
     <section class="about" id="about">
         <div class="container">
             <div class="section-title">
-                <h2>About</h2>
+                <h2>About Us</h2>
             </div>
             <div class="about-content">
                 <div class="about-image">
@@ -192,7 +192,7 @@
                     <div class="service-icon">
                         <i class="fas fa-bullhorn"></i>
                     </div>
-                    <h3>Marketing & Promotional Design</h3>
+                    <h3>Marketing  & Promotional Design</h3>
                     <p>Strategic designs that amplify your marketing campaigns and drive results. From social media graphics to promotional materials, we create visuals that capture attention and convert audiences into customers.</p>
                 </div>
                 <div class="service-card">
@@ -250,40 +250,50 @@
         </div>
 
         <div class="portfolio-grid" id="projectsGrid">
-            <!-- ==== brandind ==== -->
-            <!-- ==== PROJECT 1 ==== -->
-            {% for project in projects %}
-            <div class="project-card  project-item {% if forloop.counter > 6 %} hidden-project {% endif %}" data-category="{{project.category}}" data-project-id="{{project.id}}">
-                <div class="project-image"><img src="{{project.main_image.url}}" alt="{{project.company_name}}" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>{{project.title}} </h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="open-opinion btn btn-primary share-opinion-btn" data-project-id="{{project.id}}" >Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>{{project.company_name}} </h3>
-                        {% if project.images.all %}
-                        <div class="project-gallery">
-                            {% for image_obj in project.images.all %}
-                                <img src="{{image_obj.image.url}}" alt="{{project.company_name}}">
-                            {% endfor %}
-                            </div>
-                        {% endif %}
-                        <p>{{project.description}} </p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">{{project.bullet_head}}:</p>
-                        <ul>
-                            {% if project.bullets.all %}
-                            {% for bullet in project.bullets.all  %}
-                            <li>{{bullet.text}} </li>
-                        
-                            {% endfor %}
+                {% for project in projects %}
+                <div class="project-card project-item {% if forloop.counter > 6 %} hidden-project {% endif %} " data-category="{{project.category}}" data-project-id="{{project.id}}">
+
+
+                    <div class="project-main-content">
+                        <div class="project-image">
+                            {% if project.main_image %}
+                            <img src="{{project.main_image.url}}" alt="{{project.title}}" class="zoomable">
                             {% endif %}
-                        </ul>
+                        </div>
+                    <div class="project-info">
+                        <h3>{{project.title}}</h3>
+                        <div class="project-locked"><p>Share opinion to unlock</p><button class="open-opinion btn btn-primary share-opinion-btn" data-project-id="{{project.id}}" >Share Opinion</button></div>
+
+                        <div class="project-collapsed">
+                            <p> {{project.description}} </p>
+                            <div class="project-toggle-buttons">
+                                <button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Hidden Content for Modal -->
+                <div class="project-expanded">
+                    <h3>{{project.title}}</h3>
+                    <p>{{project.paragraph}}</p>
+                    <p><strong>{{project.bullet_head}} </strong></p>
+                    <ul>
+                        {% if project.bullets.all %}
+                            {% for bullet in project.bullets.all  %}
+                            <li>{{bullet.text}}</li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                    <div class="project-gallery">
+                        {% if project.images.all %}
+                            {% for image_obj in project.images.all %}
+                                <img src="{{image_obj.image.url}}" alt="{{project.title}}">
+                            {% endfor %}
+                        {% endif %}
                         <p>{{project.paragraph}}
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">{{project.final_quote}}</p></p>
+                        <p id="pmFinalQuote" class="final-quote-data" style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">{{project.final_quote}}</p></p>
                         <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
                     </div>
-                    <div class="project-collapsed">
-                        <p>{{project.description}} </p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
                 </div>
             </div>
             {% endfor %}
@@ -296,773 +306,6 @@
                 <span>Close All Projects</span>
                 <i class="fas fa-chevron-up"></i>
             </button>
-            </div>
-            <!-- ==== PROJECT 2 ==== -->
-            <div class="project-card" data-category="branding" data-project-id="2">
-                <div class="project-image"><img src="asset/Designs/Branding/Golden Crunch.jpg" alt="branding 2" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Hero product photography with crispy golden fries as the focal point</li>
-                        <li>Bright turquoise and golden yellow palette that evokes freshness and appetite</li>
-                        <li>Mixed typography hierarchy combining bold sans-serif with elegant script</li>
-                        <li>Bullet-point benefits with fries emoji icons for easy information digestion</li>
-                        <li>Strong promotional callouts featuring "50% OFF" and "FREE DELIVERY"</li>
-                        <li>Animated falling leaves creating motion, vitality, and organic freshness</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we'd love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 3 ==== -->
-            <div class="project-card" data-category="branding" data-project-id="3">
-                <div class="project-image"><img src="asset/Designs/Branding/Nemo Poster.png" alt="branding 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Movie Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>ZFLIMX PRESENTS</h3>
-                        <p>We designed this cinematic poster for a streaming platform showcase, featuring the beloved Pixar film Finding Nemo. The goal was to create a bold, modern, and minimalist design that captures the essence of the movie.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">Our creative strategy included:</p>
-                        <ul>
-                        <li>Giant typographic "Z" letter filled with vibrant underwater clownfish imagery</li>
-                        <li>Metallic silver gradient creating premium cinematic depth and dimension</li>
-                        <li>Black background canvas that amplifies color vibrancy and drama</li>
-                        <li>Clean minimalist layout with strategic negative space for visual impact</li>
-                        <li>Professional film credits including director name and genre classification</li>
-                        <li>Platform exclusivity badge emphasizing "Available only on Zflimx"</li>
-                        </ul>
-                        <p>This poster demonstrates our ability to create entertainment industry visuals from streaming platform graphics to movie promotions and event posters.If you need striking visuals for your streaming service, film festival, or entertainment brand.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">let's create something unforgettable!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We designed this cinematic poster for a streaming platform showcase, featuring the beloved Pixar film Finding Nemo. The goal was to create a bold, modern, and minimalist design that captures the essence of the movie.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 4 ==== -->
-            <div class="project-card" data-category="branding" data-project-id="4">
-                <div class="project-image"><img src="asset/Designs/Branding/Social Media post(Food).jpg" alt="branding 4" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Product Marketing Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>GUT-SEE FOODS</h3>
-                        <p>We created this health-focused product promotion for Gut-See Foods, emphasizing the unique benefits of their naturally fermented sourdough bread. The design aims to educate consumers while building excitement.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">Key design elements:</p>
-                        <ul>
-                        <li>Energetic human model showing enthusiasm and product confidence</li>
-                        <li>Bold exclamatory headline creating excitement about product perfection</li>
-                        <li>Cloud-icon benefit bullets highlighting health attributes (no sugar, no yeast)</li>
-                        <li>Transparent product packaging showcasing authentic sourdough loaves</li>
-                        <li>Floating wheat background elements reinforcing natural ingredient storys</li>
-                        <li>B2B distributor call-to-action targeting business partnership growth</li>
-                        </ul>
-                        <p>This poster effectively communicates product differentiation in the health food market, perfect for social media, trade shows, and distributor outreach. If your food brand needs compelling visuals that educate and sell.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we're here to help!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this health-focused product promotion for Gut-See Foods, emphasizing the unique benefits of their naturally fermented sourdough bread. The design aims to educate consumers while building excitement.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 5 ==== -->
-            <div class="project-card" data-category="branding" data-project-id="5">
-                <div class="project-image"><img src="asset/Designs/Branding/Social Media poster(sourdough bread).jpg" alt="branding 5" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Sourdough Standout Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>GUT-SEE FOODS</h3>
-                        <p>We designed this premium product showcase to position Gut-See Foods as a leader in authentic, health-conscious bread making. The visual strategy focuses on quality, tradition, and differentiation.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">Design highlights:</p>
-                        <ul>
-                        <li>Premium artisan bread photography with rustic texture detail as hero element</li>
-                        <li>"STAND OUT" typography integration with bread replacing the "O" letter</li>
-                        <li>Vibrant turquoise background creating energy, freshness, and modernity</li>
-                        <li>Elegant golden script tagline adding sophistication to brand messaging</li>
-                        <li>Multiple bread angles showcase demonstrating product variety and quality</li>
-                        <li>Health + taste value proposition differentiating from ordinary bread competitors</li>
-                        </ul>
-                        <p>This design works perfectly for trade shows, B2B presentations, distributor pitches, and social media campaigns aimed at restaurants, cafes, and retailers.If your brand needs premium product visuals that command attention and communicate value.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">let's collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We designed this premium product showcase to position Gut-See Foods as a leader in authentic, health-conscious bread making. The visual strategy focuses on quality, tradition, and differentiation.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 6 ==== -->
-            <div class="project-card" data-category="branding" data-project-id="6">
-                <div class="project-image"><img src="asset/Designs/Branding/Urban Threadz.png" alt="branding 6" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Grand Launch Sale Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>URBAN THREADZ</h3>
-                        <p>We created this high-energy retail launch poster for Urban Threadz flagship store opening, combining urban street culture with modern glitch aesthetics to capture Gen Z and millennial audiences.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">Our creative approach:</p>
-                        <ul>
-                        <li>Graffiti street art background establishing urban, edgy brand identity</li>
-                        <li>Digital glitch effect mannequin appealing to Gen Z digital-native audience</li>
-                        <li>Yellow caution tape design elements creating urgency and event exclusivity</li>
-                        <li>Broken "45% OFF" typography with distorted numbers for street aesthetic</li>
-                        <li>Repeating diagonal banner strips with launch messaging for visual rhythm</li>
-                        <li>Complete event information including date (May 30, 2025), location, and social handles</li>
-                        </ul>
-                        <p>This poster exemplifies retail event marketing that generates buzz, drives foot traffic, and creates shareable social media content.If your retail brand needs bold launch campaigns or promotional graphics that stop the scroll.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we're ready to create!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this high-energy retail launch poster for Urban Threadz flagship store opening, combining urban street culture with modern glitch aesthetics to capture Gen Z and millennial audiences.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-            <!-- ui & ux -->
-            <!-- ==== PROJECT 1 ==== -->
-            <div class="project-card" data-category="ui-ux" data-project-id="7">
-                <div class="project-image"><img src="asset/Designs/UI-UX/Bank dashboard/1.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <div class="project-gallery">
-                                <img src="asset/Designs/UI-UX/Bank dashboard/2.jpg" alt="Project 4a">
-                                <img src="asset/Designs/UI-UX/Bank dashboard/3.jpg" alt="Project 4b">
-                                <img src="asset/Designs/UI-UX/Bank dashboard/4.jpg" alt="Project 4c">
-                            </div>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 2 ==== -->
-            <div class="project-card" data-category="ui-ux" data-project-id="8">
-                <div class="project-image"><img src="asset/Designs/UI-UX/Movie website/Desktop - 1.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <div class="project-gallery">
-                                <img src="asset/Designs/UI-UX/Movie website/Desktop - 2.jpg" alt="Project 4a">
-                                <img src="asset/Designs/UI-UX/Movie website/Desktop - 3.jpg" alt="Project 4b">
-                                <img src="asset/Designs/UI-UX/Movie website/Desktop - 4.jpg" alt="Project 4c">
-                            </div>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 3 ==== -->
-            <div class="project-card" data-category="ui-ux" data-project-id="9">
-                <div class="project-image"><img src="asset/Designs/UI-UX/Watch website/main frame-5.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <div class="project-gallery">
-                                <img src="asset/Designs/UI-UX/Watch website/main frame.jpg" alt="project 4a">
-                                <img src="asset/Designs/UI-UX/Watch website/main frame-1.jpg" alt="Project 4b">
-                                <img src="asset/Designs/UI-UX/Watch website/main frame-2.jpg" alt="Project 4c">
-                                <img src="asset/Designs/UI-UX/Watch website/main frame-3.jpg" alt="Project 4d">
-                                <img src="asset/Designs/UI-UX/Watch website/main frame-4.jpg" alt="project 4e">
-                            </div>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-            <!-- ==== end branding ==== -->
-            <!-- ==== LOGO ==== -->
-            <!-- ==== PROJECT 1 ==== -->
-            <div class="project-card" data-category="logo" data-project-id="10">
-                <div class="project-image"><img src="asset/Designs/LOGO/Cafe logo.jpg" alt="Logo 1" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 2 ==== -->
-            <div class="project-card" data-category="logo" data-project-id="11">
-                <div class="project-image"><img src="asset/Designs/LOGO/Green house logo.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we'd love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 3 ==== -->
-            <div class="project-card" data-category="logo" data-project-id="12">
-                <div class="project-image"><img src="asset/Designs/LOGO/logo.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 4 ==== -->
-            <div class="project-card" data-category="logo" data-project-id="13">
-                <div class="project-image"><img src="asset/Designs/LOGO/MOBILE.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-            <!-- ==== end LOGO ==== -->
-            <!-- ==== Poster==== -->
-            <!-- ==== PROJECT 1 ==== -->
-            <div class="project-card" data-category="posters" data-project-id="14">
-                <div class="project-image"><img src="asset/Designs/Posters/Brand new day(spiderman).jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 2 ==== -->
-            <div class="project-card" data-category="posters" data-project-id="15">
-                <div class="project-image"><img src="asset/Designs/Posters/Dominic Toretto.png" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 3 ==== -->
-            <div class="project-card" data-category="posters" data-project-id="16">
-                <div class="project-image"><img src="asset/Designs/Posters/Fall.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 4 ==== -->
-            <div class="project-card" data-category="posters" data-project-id="17">
-                <div class="project-image"><img src="asset/Designs/Posters/Ferrari.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 5 ==== -->
-            <div class="project-card" data-category="posters" data-project-id="18">
-                <div class="project-image"><img src="asset/Designs/Posters/Gym Poster.png" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 6 ==== -->
-            <div class="project-card" data-category="posters" data-project-id="19">
-                <div class="project-image"><img src="asset/Designs/Posters/Spider-Man.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 7 ==== -->
-            <div class="project-card" data-category="posters" data-project-id="20">
-                <div class="project-image"><img src="asset/Designs/Posters/Zoo .jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-            
-            <!-- ==== banner design ==== -->
-            <!-- ==== PROJECT 1 ==== -->
-            <div class="project-card" data-category="banner design" data-project-id="21">
-                <div class="project-image"><img src="asset/Designs/Banner Design/ARTZ Banner Design.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 2 ==== -->
-            <div class="project-card" data-category="banner design" data-project-id="22">
-                <div class="project-image"><img src="asset/Designs/Banner Design/Linkedin.png" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== visting card ==== -->
-            <!-- ==== PROJECT 1 ==== -->
-            <div class="project-card" data-category="visiting card" data-project-id="23">
-                <div class="project-image"><img src="asset/Designs/Visiting Card/mobile store visiting card.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 2 ==== -->
-            <div class="project-card" data-category="visiting card" data-project-id="24">
-                <div class="project-image"><img src="asset/Designs/Visiting Card/Mobile Store.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p><div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== thumbnail ==== -->
-            <!-- ==== PROJECT 1 ==== -->
-            <div class="project-card" data-category="thumbnail" data-project-id="25">
-                <div class="project-image"><img src="asset/Designs/Thumbnail/1.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 2 ==== -->
-            <div class="project-card" data-category="thumbnail" data-project-id="26">
-                <div class="project-image"><img src="asset/Designs/Thumbnail/2.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 3 ==== -->
-            <div class="project-card" data-category="thumbnail" data-project-id="27">
-                <div class="project-image"><img src="asset/Designs/Thumbnail/3.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 4 ==== -->
-            <div class="project-card" data-category="thumbnail" data-project-id="28">
-                <div class="project-image"><img src="asset/Designs/Thumbnail/4.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 5 ==== -->
-            <div class="project-card" data-category="thumbnail" data-project-id="29">
-                <div class="project-image"><img src="asset/Designs/Thumbnail/5.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
-            </div>
-
-            <!-- ==== PROJECT 6 ==== -->
-            <div class="project-card" data-category="thumbnail" data-project-id="30">
-                <div class="project-image"><img src="asset/Designs/Thumbnail/6.jpg" alt="Project 3" class="zoomable"></div>
-                <div class="project-info">
-                    <h3>Food Promotion Poster</h3>
-                    <div class="project-locked"><p>Share opinion to unlock</p><button class="btn btn-primary share-opinion-btn">Share Opinion</button></div>
-                    <div class="project-expanded">
-                        <h3>Golden Crunch</h3>
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">In this project, we emphasized:</p>
-                        <ul>
-                        <li>Clear and bold typography hierarchy</li>
-                        <li>Bright, inviting color tones</li>
-                        <li>Clean product-focused composition</li>
-                        <li>A friendly promotional aesthetic</li>
-                        </ul>
-                        <p> We specialize in brand visuals, product promotions, and marketing creatives that help businesses stand out and connect with customers.If your brand is looking for engaging promotional graphics.
-                        <p style="font-weight: 600;margin-bottom: 0.5rem;color: var(--text-primary);">we’d love to collaborate!</p></p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn collapse-btn"><i class="fas fa-chevron-up"></i></button></div>
-                    </div>
-                    <div class="project-collapsed">
-                        <p>We created this design to highlight a warm, appetizing food experience ,  focusing on freshness, texture, and visual flavor.Our goal was to make the viewer taste it with their eyes.</p>
-                        <div class="project-toggle-buttons"><button class="toggle-btn expand-btn"><i class="fas fa-chevron-down"></i></button></div></div>
-                </div>
             </div>
         </div>
     </div>
@@ -1235,49 +478,6 @@
     </section>
 
     <!-- Testimonials -->
-    <!-- <section class="testimonials">
-        <div class="container">
-            <div class="section-title">
-                <h2>Client Testimonials</h2>
-            </div>
-            <div class="testimonial-carousel">
-                <div class="testimonial-card active">
-                    <div class="testimonial-rating">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <p class="testimonial-text">"Working with this designer was an absolute pleasure. They understood our vision perfectly and delivered a brand identity that exceeded our expectations. The attention to detail and creative insight they brought to the project was invaluable."</p>
-                    <div class="testimonial-author">
-                        <img src="https://picsum.photos/seed/author1/60/60.jpg" alt="Author 1" class="author-image">
-                        <div class="author-info">
-                            <h4>Sarah Johnson</h4>
-                            <p>CEO, TechStart Inc.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="carousel-controls">
-                    <button class="carousel-btn prev-testimonial">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <div class="carousel-dots">
-                        <span class="dot active" data-index="0"></span>
-                        <span class="dot" data-index="1"></span>
-                        <span class="dot" data-index="2"></span>
-                    </div>
-                    <button class="carousel-btn next-testimonial">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section> -->
-
-
-
-
     <section class="testimonials-section">
         <div class="container">
             <h2 class="section-title">Client Testimonials</h2>
@@ -1593,15 +793,26 @@
                     <div class="pm-description">
                         <p id="pmShortDesc" class="pm-short-desc"></p>
                         <div id="pmFullDesc" class="pm-full-desc"></div>
+                         <p id="pmFinalQuote" class="pm-final-quote"></p>
                     </div>
                     <div class="pm-tech-stack">
-                        <h3>Tools & Technologies</h3>
+                        <!-- <h3>Tools & Technologies</h3> -->
                         <div class="pm-tags" id="pmTags"></div>
                     </div>
+                    
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        const SEND_CONTACT_URL = "{% url 'send_contact' %}";
+        const SAVE_OPINION_URL = "{% url 'save_opinion' %}";
+        const LOGIN_URL = "{% url 'login' %}";
+        const SIGNUP_URL = "{% url 'signup' %}";
+        const LOGOUT_URL = "{% url 'logout' %}";
+        const userAuthenticated = "{% url 'user' %}";
+    
+    </script>
     <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>
