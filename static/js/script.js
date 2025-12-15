@@ -1127,23 +1127,73 @@ function resetOpinionForm() {
 }
 
 // ==================== PORTFOLIO FEATURES ====================
+// let isViewAllActive = false;
+let currentFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', initPortfolioFeatures);
+
 function initPortfolioFeatures() {
-    // Filter buttons
     const filterButtons = document.querySelectorAll('.filter-btn');
     const projectCards = document.querySelectorAll('.project-card');
+    const viewAllBtn = document.getElementById('viewAllBtn');
+    const closeAllBtn = document.getElementById('closeAllBtn');
 
+    function applyFilter(filter) {
+        currentFilter = filter;
+        let visibleCount = 0;
+
+        projectCards.forEach(card => {
+            const category = card.dataset.category;
+            const matches = filter === 'all' || category === filter;
+
+            if (!matches) {
+                card.classList.add('hidden');
+                return;
+            }
+
+            visibleCount++;
+
+            if (!isViewAllActive && visibleCount > 6) {
+                card.classList.add('hidden');
+            } else {
+                card.classList.remove('hidden');
+            }
+        });
+    }
+
+    // Filter buttons
     filterButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             filterButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            const filter = btn.dataset.filter;
-            projectCards.forEach(card => {
-                const category = card.dataset.category;
-                card.style.display = (filter === 'all' || category === filter) ? 'block' : 'none';
-            });
+            applyFilter(btn.dataset.filter);
         });
     });
+
+    // View All (category-scoped)
+    viewAllBtn.addEventListener('click', () => {
+        isViewAllActive = true;
+        viewAllBtn.classList.add('hidden');
+        closeAllBtn.classList.remove('hidden');
+
+        applyFilter(currentFilter);
+    });
+
+    // Close All (back to 6 of current category)
+    closeAllBtn.addEventListener('click', () => {
+        isViewAllActive = false;
+        closeAllBtn.classList.add('hidden');
+        viewAllBtn.classList.remove('hidden');
+
+        applyFilter(currentFilter);
+    });
+
+    // Initial state on page load
+    applyFilter('all');
+
+
+
 
     // Share opinion buttons
     document.querySelectorAll('.share-opinion-btn').forEach(btn => {
@@ -1325,13 +1375,13 @@ function restoreProjectStates() {
 }
 
 
-const viewAllBtn = document.getElementById("viewAllBtn");
+/* const viewAllBtn = document.getElementById("viewAllBtn");
 const closeAllBtn = document.getElementById("closeAllBtn");
 
 const hiddenProjects = document.querySelectorAll(".hidden-project");
 
 viewAllBtn.addEventListener("click", () => {
-    hiddenProjects.forEach(p => p.style.display = "block");
+    hiddenProjects.forEach(p => p.style.display = "none");
     viewAllBtn.classList.add("hidden");
     closeAllBtn.classList.remove("hidden");
 });
@@ -1340,7 +1390,40 @@ closeAllBtn.addEventListener("click", () => {
     hiddenProjects.forEach(p => p.style.display = "none");
     closeAllBtn.classList.add("hidden");
     viewAllBtn.classList.remove("hidden");
+}); */
+
+const viewAllBtn = document.getElementById("viewAllBtn");
+const closeAllBtn = document.getElementById("closeAllBtn");
+
+const projectCards = document.querySelectorAll(".project-card");
+const hiddenProjects = document.querySelectorAll(".hidden-project");
+
+let isViewAllActive = false;
+
+/* VIEW ALL */
+viewAllBtn.addEventListener("click", () => {
+    isViewAllActive = true;
+
+    projectCards.forEach(card => {
+        card.classList.remove("hidden");
+    });
+
+    viewAllBtn.classList.add("hidden");
+    closeAllBtn.classList.remove("hidden");
 });
+
+/* CLOSE ALL */
+closeAllBtn.addEventListener("click", () => {
+    isViewAllActive = false;
+
+    hiddenProjects.forEach(card => {
+        card.classList.add("hidden");
+    });
+
+    closeAllBtn.classList.add("hidden");
+    viewAllBtn.classList.remove("hidden");
+});
+
 
 
 // ==================== ANIMATED TAGLINE ====================

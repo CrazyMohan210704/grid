@@ -132,7 +132,7 @@ def ContactPage(request):
         product_type=request.POST['product_type']
         message=request.POST['message']
 
-        Contact(name=name,email=email,product_type=product_type,message=message,created_at=timezone.now())
+        Contact.objects.create(name=name,email=email,product_type=product_type,message=message,created_at=timezone.now())
 
         send_mail(
             subject=f"New Contact From - {name}",
